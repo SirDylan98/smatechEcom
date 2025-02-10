@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Map;
-@FeignClient(name = "cart-service", url = "http://localhost:8081/api/v1/inventory")
+@FeignClient(name = "inventory-service", url = "http://localhost:8081/api/v1/inventory")
 public interface InventoryServiceClient {
     @PostMapping("/check-availability")
     public ApiResponse<InventoryCheckResult> checkInventoryAvailability(

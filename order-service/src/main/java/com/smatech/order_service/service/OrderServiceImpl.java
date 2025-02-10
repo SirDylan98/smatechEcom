@@ -23,6 +23,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -116,15 +117,21 @@ public class OrderServiceImpl implements OrderService {
             Order savedOrder = orderRepository.save(order);
 
 
-            OrderCreatedEvent event = new OrderCreatedEvent(OrderEventDetails.builder()
-                    .amount(totalAmount)
-                    .status(order.getOrderStatus())
+            OrderEventDetails event = OrderEventDetails.builder()
+                    .amount(BigDecimal.valueOf(totalAmount))
+                    //.status(order.getOrderStatus().name())
+
                     .orderId(savedOrder.getOrderId())
                     .userId(savedOrder.getUserId())
-                    .build());
-            applicationEventPublisher.publishEvent(event);
+                    .build();
+            ApiResponse<String> checkOutResponse = paymentServiceClient.processPayment(event);
+            if (checkOutResponse.getStatusCode()!= HttpStatus.OK.value()) {
+                throw new OrderProcessingException("Error processing payment");
+            }
+            OrderResponse response = mapToOrderResponse(savedOrder);
+            response.setCheckoutUrl(checkOutResponse.getBody());
 
-            return mapToOrderResponse(savedOrder);
+            return response;
         } catch (Exception e) {
             log.error("==========> Error creating order", e);
             throw new OrderProcessingException("=============> Failed to create order"+ e.getMessage());

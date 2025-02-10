@@ -1,7 +1,5 @@
-package com.smatech.order_service.dto;
+package com.smatech.payment_service.dto;
 
-import com.smatech.order_service.enums.Currency;
-import com.smatech.order_service.enums.OrderStatus;
 import lombok.Builder;
 import lombok.Data;
 
@@ -10,11 +8,11 @@ import java.math.BigDecimal;
 /**
  * Created by DylanDzvene
  * Email: dylandzvenetashinga@gmail.com
- * Created on: 2/9/2025
+ * Created on: 2/10/2025
  */
 @Data
 @Builder
-public class OrderEventDetails {
+public class OrderEvent {
     private String orderId;
     private BigDecimal amount;
     private String userId;

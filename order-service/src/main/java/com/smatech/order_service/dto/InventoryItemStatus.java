@@ -1,6 +1,7 @@
 package com.smatech.order_service.dto;
 
-import com.smatech.inventory_service.enums.InventoryStatus;
+
+import com.smatech.order_service.enums.InventoryStatus;
 import lombok.*;
 
 /**

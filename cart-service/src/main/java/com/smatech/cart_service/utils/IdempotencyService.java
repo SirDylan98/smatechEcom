@@ -2,8 +2,7 @@ package com.smatech.cart_service.utils;
 
 import com.smatech.cart_service.dto.IdempotencyBody;
 import com.smatech.cart_service.enums.IdempotencyStatus;
-import com.smatech.inventory_service.dto.IdempotencyBody;
-import com.smatech.inventory_service.enums.IdempotencyStatus;
+
 
 import java.util.HashMap;
 import java.util.Map;

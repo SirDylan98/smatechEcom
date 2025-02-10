@@ -26,4 +26,5 @@ public class OrderResponse {
     private Currency currency;
     private LocalDateTime createdDate;
     private String shippingAddress;
+    private String checkoutUrl;
 }

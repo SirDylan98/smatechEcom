@@ -35,7 +35,7 @@ public class InventoryController {
 
     @Operation(summary = "Initialize new inventory")
     @PostMapping("/initialize")
-    public ApiResponse<Inventory> initializeInventory(@RequestBody @Valid Inventory request) {
+    public ApiResponse<Inventory> initializeInventory(@RequestBody  Inventory request) {
         log.info("----> Incoming Initialize Inventory request {}", JsonUtil.toJson(request));
         Inventory response = inventoryService.initializeInventory(request);
         return new ApiResponse<>(response, "Inventory initialized successfully", HttpStatus.OK.value());
