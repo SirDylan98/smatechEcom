@@ -12,6 +12,7 @@ import com.smatech.product_service.utils.JsonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -22,7 +23,7 @@ import java.util.List;
  * Email: dylandzvenetashinga@gmail.com
  * Created on: 2/7/2025
  */
-@Service
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class ProductProcessor {

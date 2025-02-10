@@ -27,6 +27,7 @@ public class Product {
     private String productImage;
     private Double productPrice;
     private Boolean onSale;
+    private Double productOnSalePrice;
     @Enumerated(EnumType.STRING)
     private Currency currency = Currency.USD;
 

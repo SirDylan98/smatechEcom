@@ -1,7 +1,8 @@
 package com.smatech.inventory_service.utils;
 
-import com.smatech.product_service.dto.IdempotencyBody;
-import com.smatech.product_service.enums.IdempotencyStatus;
+import com.smatech.inventory_service.dto.IdempotencyBody;
+import com.smatech.inventory_service.enums.IdempotencyStatus;
+
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,13 +13,13 @@ import java.util.Map;
  * Created on: 2/7/2025
  */
 public class IdempotencyService {
-    public  static Map<String, IdempotencyBody> orderServiceIdomMap= new HashMap<>();
+    public  static Map<String, IdempotencyBody> inventoryServiceIdomMap= new HashMap<>();
 
-    public static void setProductServiceIdomMap(String idemKey, IdempotencyBody idempotencyBody){
-        orderServiceIdomMap.put(idemKey,idempotencyBody);
+    public static void setInventoryServiceIdomMap(String idemKey, IdempotencyBody idempotencyBody){
+        inventoryServiceIdomMap.put(idemKey,idempotencyBody);
     }
-    public static  IdempotencyBody getProductServiceIdemp(String idemKey){
-        return orderServiceIdomMap.getOrDefault(idemKey,IdempotencyBody.builder()
+    public static  IdempotencyBody getInventoryServiceIdemp(String idemKey){
+        return inventoryServiceIdomMap.getOrDefault(idemKey,IdempotencyBody.builder()
                 .requestStatus(IdempotencyStatus.NOT_FOUND.name())
                 .build());
 

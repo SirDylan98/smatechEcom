@@ -2,6 +2,7 @@ package com.smatech.product_service.controller;
 
 import com.smatech.product_service.dto.CreateProductDto;
 import com.smatech.product_service.model.Product;
+import com.smatech.product_service.processors.ProductProcessor;
 import com.smatech.product_service.service.ProductService;
 import com.smatech.product_service.utils.ApiResponse;
 import com.smatech.product_service.utils.JsonUtil;
@@ -27,13 +28,14 @@ import java.util.List;
 @Tag(name = "Product Controller", description = "Endpoints for Product Management")
 public class ProductController {
     private final ProductService productService;
+    private final ProductProcessor productProcessor;
 
     @Operation(summary = "Create a new product")
     @PostMapping("/create")
     public ApiResponse<Product> createProduct(@RequestBody @Valid CreateProductDto request) {
         log.info("----> Incoming Create Product request {}", JsonUtil.toJson(request));
-        Product response = productService.createProduct(request);
-        return new ApiResponse<>(response, "Product created successfully", HttpStatus.NOT_FOUND.value());
+        ApiResponse<Product> response = productProcessor.createProduct(request);
+        return response;
     }
 
     @Operation(summary = "Find product by code")

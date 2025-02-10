@@ -1,6 +1,9 @@
 package com.smatech.inventory_service.controller;
 
+import com.smatech.inventory_service.dto.InventoryCheckResult;
+import com.smatech.inventory_service.dto.InventoryDto;
 import com.smatech.inventory_service.model.Inventory;
+import com.smatech.inventory_service.processor.InventoryProcessor;
 import com.smatech.inventory_service.service.InventoryService;
 import com.smatech.inventory_service.utils.ApiResponse;
 import com.smatech.inventory_service.utils.JsonUtil;
@@ -13,6 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Created by DylanDzvene
@@ -26,6 +31,7 @@ import java.util.List;
 @Tag(name = "Inventory Controller", description = "Endpoints for Inventory Management")
 public class InventoryController {
     private final InventoryService inventoryService;
+    private final InventoryProcessor inventoryProcessor;
 
     @Operation(summary = "Initialize new inventory")
     @PostMapping("/initialize")
@@ -75,18 +81,18 @@ public class InventoryController {
 
     @Operation(summary = "Add inventory items")
     @PostMapping("/add")
-    public ApiResponse<List<Inventory>> addInventory(@RequestBody @Valid List<Inventory> request) {
-        log.info("----> Incoming Add Inventory request for {} items", request.size());
-        List<Inventory> response = inventoryService.addInventory(request);
-        return new ApiResponse<>(response, "Inventory items added successfully", HttpStatus.OK.value());
+    public ApiResponse<List<Inventory>> addInventory(@RequestBody @Valid InventoryDto request) {
+        log.info("----> Incoming Add Inventory request for {} items",JsonUtil.toJson(request)) ;
+        ApiResponse<List<Inventory>> response = inventoryProcessor.addInventoryQuantity(request);
+        return response;
     }
 
     @Operation(summary = "Remove inventory items")
     @PostMapping("/remove")
-    public ApiResponse<List<Inventory>> removeInventory(@RequestBody @Valid List<Inventory> request) {
-        log.info("----> Incoming Remove Inventory request for {} items", request.size());
-        List<Inventory> response = inventoryService.removeInventory(request);
-        return new ApiResponse<>(response, "Inventory items removed successfully", HttpStatus.OK.value());
+    public ApiResponse<List<Inventory>> removeInventory(@RequestBody @Valid InventoryDto request) {
+        log.info("----> Incoming Subtracting Inventory request for {} items",JsonUtil.toJson(request)) ;
+        ApiResponse<List<Inventory>> response = inventoryProcessor.removeInventoryQuantity(request);
+        return response;
     }
 
     @Operation(summary = "Get all products at reorder level")
@@ -95,5 +101,64 @@ public class InventoryController {
         log.info("----> Fetching all products at reorder level");
         List<Inventory> response = inventoryService.getAllProductsAtReorderLevel();
         return new ApiResponse<>(response, "Reorder level products retrieved successfully", HttpStatus.OK.value());
+    }
+
+
+    @Operation(summary = "Check inventory availability for multiple products")
+    @PostMapping("/check-availability")
+    public ApiResponse<InventoryCheckResult> checkInventoryAvailability(
+            @RequestBody @Valid Map<String, Integer> requests) {
+        log.info("----> Incoming Check Inventory Availability request {}", JsonUtil.toJson(requests));
+
+        InventoryCheckResult result = inventoryService.checkInventoryAvailability(requests);
+
+        String message = result.isHasOutOfStock()
+                ? "Some items are out of stock"
+                : "All items available";
+
+        return new ApiResponse<>(
+                result,
+                message,
+                HttpStatus.OK.value()
+        );
+    }
+
+    @Operation(summary = "Reserve inventory for multiple products")
+    @PostMapping("/reserve")
+    public ApiResponse<List<Inventory>> reserveInventory(
+            @RequestBody @Valid Map<String, Integer> requests) {
+        log.info("----> Incoming Reserve Inventory request {}", JsonUtil.toJson(requests));
+
+
+        List<Inventory> result = inventoryService.reservedInventory(requests);
+
+        return new ApiResponse<>(
+                result,
+                "Inventory reserved successfully",
+                HttpStatus.OK.value()
+        );
+    }
+
+    @Operation(summary = "Release reserved inventory")
+    @PostMapping("/release")
+    public ApiResponse<List<Inventory>> releaseInventory(
+            @RequestBody @Valid Map<String, Integer> requests) {
+        log.info("----> Incoming Release Inventory request {}", JsonUtil.toJson(requests));
+
+        // Convert map to list of Inventory objects
+        List<Inventory> inventoryList = requests.entrySet().stream()
+                .map(entry -> Inventory.builder()
+                        .productCode(entry.getKey())
+                        .reservedQuantity(entry.getValue())
+                        .build())
+                .collect(Collectors.toList());
+
+        List<Inventory> result = inventoryService.releaseInventory(inventoryList);
+
+        return new ApiResponse<>(
+                result,
+                "Inventory released successfully",
+                HttpStatus.OK.value()
+        );
     }
 }
