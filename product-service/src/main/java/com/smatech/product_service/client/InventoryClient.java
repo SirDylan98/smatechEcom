@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
  * Email: dylandzvenetashinga@gmail.com
  * Created on: 2/10/2025
  */
-@FeignClient(name = "inventory-service", url = "http://localhost:8082/api/v1/carts")
+@FeignClient(name = "inventory-service", url = "http://localhost:8081/api/v1/inventory")
 public interface InventoryClient {
     @PostMapping("/initialize")
     public ApiResponse<Inventory> initializeInventory(@RequestBody Inventory request);

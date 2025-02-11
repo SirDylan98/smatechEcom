@@ -1,4 +1,4 @@
-package com.smatech.payment_service.enums;
+package com.smatech.commons_library.dto;
 
 public enum PaymentStatus {
     CREATED, COMPLETED, FAILED,

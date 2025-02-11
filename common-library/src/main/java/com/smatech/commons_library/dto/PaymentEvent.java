@@ -1,9 +1,7 @@
-package com.smatech.order_service.dto;
+package com.smatech.commons_library.dto;
 
-import com.smatech.order_service.enums.PaymentStatus;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -14,6 +12,8 @@ import java.time.LocalDateTime;
  * Created on: 2/10/2025
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class PaymentEvent {
     private String orderId;

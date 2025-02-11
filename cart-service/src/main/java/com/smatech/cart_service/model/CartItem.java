@@ -23,6 +23,7 @@ public class CartItem {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+    private String productName;
 
     private String productId;
     private Integer quantity;

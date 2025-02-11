@@ -10,6 +10,6 @@ public interface OrderService {
     OrderResponse createOrder(CreateOrderRequest request);
     OrderResponse getOrder(String orderId);
     List<OrderResponse> getUserOrders(String userId);
-    void handlePaymentFailure(String orderId);
+    void handlePaymentFailureProcessing(String orderId);
     void updateOrderStatus(String orderId, OrderStatus status);
 }

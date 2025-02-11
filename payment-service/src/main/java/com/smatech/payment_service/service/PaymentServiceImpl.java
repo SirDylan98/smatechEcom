@@ -7,28 +7,24 @@ package com.smatech.payment_service.service;
  */
 
 
+import com.smatech.commons_library.dto.PaymentEvent;
+import com.smatech.commons_library.dto.PaymentStatus;
 import com.smatech.payment_service.dto.OrderEvent;
-import com.smatech.payment_service.dto.PaymentEvent;
-import com.smatech.payment_service.enums.PaymentStatus;
 import com.smatech.payment_service.exception.PaymentProcessingException;
 import com.smatech.payment_service.model.Payment;
 import com.smatech.payment_service.repository.PaymentRepository;
 import com.smatech.payment_service.utils.JsonUtil;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
-import com.stripe.model.Charge;
 import com.stripe.model.Event;
-import com.stripe.model.PaymentIntent;
 import com.stripe.model.StripeObject;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
-import com.stripe.param.PaymentIntentCreateParams;
 import com.stripe.param.checkout.SessionCreateParams;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,7 +55,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public Payment processPaymentRequest(OrderEvent orderEvent) {
-        log.info("Received payment request for order: {}", JsonUtil.toJson(orderEvent));
+        log.info("==============>Received payment request for order: {}", JsonUtil.toJson(orderEvent));
 
         try {
 
@@ -183,7 +179,7 @@ public class PaymentServiceImpl implements PaymentService {
             PaymentEvent paymentEvent = PaymentEvent.builder()
                     .orderId(payment.getOrderId())
                     .userId(payment.getUserId())
-                    .status(PaymentStatus.COMPLETED)
+                    .status(com.smatech.commons_library.dto.PaymentStatus.COMPLETED)
                     .amount(payment.getAmount())
                     .timestamp(LocalDateTime.now())
                     .build();

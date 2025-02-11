@@ -1,7 +1,8 @@
 package com.smatech.payment_service.service;
 
-import com.smatech.payment_service.dto.PaymentEvent;
+import com.smatech.commons_library.dto.PaymentEvent;
 import com.smatech.payment_service.exception.KafkaMessagePublishException;
+import com.smatech.payment_service.utils.JsonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -9,7 +10,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -24,8 +24,8 @@ import java.util.concurrent.TimeUnit;
 public class KafkaPaymentPublisher {
     private final KafkaTemplate<String, PaymentEvent> kafkaTemplate;
 
-    public static final String PAYMENT_SUCCESS_TOPIC = "payment-success";
-    public static final String PAYMENT_FAILURE_TOPIC = "payment-failure";
+    public static final String PAYMENT_SUCCESS_TOPIC = "payment-success2";
+    public static final String PAYMENT_FAILURE_TOPIC = "payment-failure2";
     private static final int MAX_RETRIES = 2;
     private static final long RETRY_DELAY_MS = 1000; // 1 second
 
@@ -36,7 +36,7 @@ public class KafkaPaymentPublisher {
             try {
                 SendResult<String, PaymentEvent> result = kafkaTemplate.send(topic, event).get(5, TimeUnit.SECONDS);
                 RecordMetadata metadata = result.getRecordMetadata();
-                log.info("Message sent successfully to topic: {}, partition: {}, offset: {}",
+                log.info("=======> Message sent successfully to topic: {}, partition: {}, offset: {}",
                         metadata.topic(),
                         metadata.partition(),
                         metadata.offset());

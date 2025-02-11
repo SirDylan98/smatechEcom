@@ -1,6 +1,6 @@
 package com.smatech.payment_service.model;
 
-import com.smatech.payment_service.enums.PaymentStatus;
+import com.smatech.commons_library.dto.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 

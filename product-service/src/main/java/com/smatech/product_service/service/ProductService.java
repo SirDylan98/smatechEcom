@@ -15,5 +15,6 @@ public interface ProductService {
     List<Product> findProductsByCategory(String category);
     List<Product> findProductsByPriceRange(double minPrice, double maxPrice);
     List<Product> findProductsOnSale();
+    Product putProductOnSale(CreateProductDto createProductDto);
     List<Product> searchForProduct(String searchKey);
 }

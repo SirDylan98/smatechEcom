@@ -1,10 +1,13 @@
 package com.smatech.order_service.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.smatech.commons_library.dto.PaymentEvent;
 import com.smatech.order_service.clients.CartServiceClient;
 import com.smatech.order_service.clients.InventoryServiceClient;
 import com.smatech.order_service.clients.PaymentServiceClient;
 import com.smatech.order_service.clients.ProductServiceClient;
 import com.smatech.order_service.dto.*;
+import com.smatech.order_service.enums.Currency;
 import com.smatech.order_service.enums.OrderStatus;
 import com.smatech.order_service.event.OrderCreatedEvent;
 import com.smatech.order_service.exception.OrderNotFoundException;
@@ -13,6 +16,7 @@ import com.smatech.order_service.model.Orders;
 import com.smatech.order_service.model.OrderItem;
 import com.smatech.order_service.repository.OrderRepository;
 import com.smatech.order_service.utils.ApiResponse;
+import com.smatech.order_service.utils.JsonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -44,17 +48,19 @@ public class OrderServiceImpl implements OrderService {
     private final KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate;
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    @KafkaListener(topics = "payment-failure", groupId = "order-service-group")
+    @KafkaListener(topics = "payment-failure2", groupId = "order-service-group")
     public void handlePaymentFailure(PaymentEvent event) {
-        log.info("📌 Order Service received failed payment event: {}", event);
+
+        log.info("📌=========================> Order Service received failed payment event: {}", event);
         // Process the failed payment for order management
-        handlePaymentFailure(event.getOrderId());
+        handlePaymentFailureProcessing(event.getOrderId());
     }
-    @KafkaListener(topics = "payment-success", groupId = "order-service-group")
+    @KafkaListener(topics = "payment-success2", groupId = "order-service-group")
     public void handlePaymentSuccess(PaymentEvent event) {
+
         log.info("📌 Order Service received Success payment event: {}", event);
         // Process the failed payment for order management
-        handlePaymentSuccess(event.getOrderId());
+        handlePaymentSuccessProcessing(event.getOrderId());
     }
     @Override
     @Transactional
@@ -76,6 +82,7 @@ public class OrderServiceImpl implements OrderService {
 
             }
             // now we tave checking for inventory  and reserving the inventory items
+
             ApiResponse<InventoryCheckResult> checkInventoryAvailability= inventoryServiceClient.checkInventoryAvailability(cartItemsMap);
             if (checkInventoryAvailability.getStatusCode()!= HttpStatus.OK.value()) {
                 throw new OrderProcessingException("==========> Error checking inventory availability");
@@ -128,7 +135,7 @@ public class OrderServiceImpl implements OrderService {
 
             OrderEventDetails event = OrderEventDetails.builder()
                     .amount(BigDecimal.valueOf(totalAmount))
-                    //.status(order.getOrderStatus().name())
+                    .currency(Currency.USD.name())
 
                     .orderId(savedOrder.getOrderId())
                     .userId(savedOrder.getUserId())
@@ -139,6 +146,11 @@ public class OrderServiceImpl implements OrderService {
             }
             OrderResponse response = mapToOrderResponse(savedOrder);
             response.setCheckoutUrl(checkOutResponse.getBody());
+            // this when we reserve the inventory
+            ApiResponse<List<Inventory>> reserveResponse = inventoryServiceClient.reserveInventory(cartItemsMap);
+            if (reserveResponse.getStatusCode()!= HttpStatus.OK.value() && reserveResponse.getBody().size()!=cartItemsMap.size()) {
+                throw new OrderProcessingException("==========> Error reserving inventory");
+            }
 
             return response;
         } catch (Exception e) {
@@ -163,13 +175,13 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public void handlePaymentFailure(String orderId) {
+    public void handlePaymentFailureProcessing(String orderId) {
         Orders order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
         order.setOrderStatus(OrderStatus.PAYMENT_FAILED);
         orderRepository.save(order);
     }
-    public void handlePaymentSuccess(String orderId) {
+    public void handlePaymentSuccessProcessing(String orderId) {
         Orders order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException(orderId));
         order.setOrderStatus(OrderStatus.COMPLETED);

@@ -21,7 +21,7 @@ public class Product {
     @Id
     private String productCode;
     private String productName;
-    private String ProductDescription;
+    private String productDescription;
     @Enumerated(EnumType.STRING)
     private Category productCategory;
     private String productImage;

@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 public class AddToCartRequest extends BaseDto {
     @NotNull
     private String productId;
+    private String productName;
     private String userId;
 
     @NotNull

@@ -56,13 +56,17 @@ public class CartServiceImpl implements CartService {
         if (existingItem.isPresent()) {
             // Update quantity if product exists
             CartItem item = existingItem.get();
+
             item.setQuantity(item.getQuantity() + request.getQuantity());// just simply adding to the already existing
+            item.setProductName(request.getProductName());
         } else {
             // Add new item if product doesn't exist
 
             CartItem newItem = CartItem.builder()
                     .productId(request.getProductId())
+                    .productName(request.getProductName())
                     .quantity(request.getQuantity())
+                    .status(Status.ACTIVE)
                     .build();
             cart.getItems().add(newItem);
         }
@@ -165,6 +169,7 @@ public class CartServiceImpl implements CartService {
         List<CartItemDTO> itemDTOs = cart.getItems().stream().filter(item -> item.getStatus().equals(Status.ACTIVE))// we makes sure kuti we only get the active ones
                 .map(item -> CartItemDTO.builder()
                         .productId(item.getProductId())
+                        .productName(item.getProductName())
                      .quantity(item.getQuantity())
                         .build())
                 .collect(Collectors.toList());

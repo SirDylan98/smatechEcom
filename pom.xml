@@ -25,6 +25,7 @@
         <module>product-service</module>
         <module>inventory-service</module>
         <module>cart-service</module>
+        <module>common-library</module>
     </modules>
 
     <properties>

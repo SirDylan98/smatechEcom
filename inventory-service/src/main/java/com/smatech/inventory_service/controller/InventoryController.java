@@ -107,7 +107,7 @@ public class InventoryController {
     @Operation(summary = "Check inventory availability for multiple products")
     @PostMapping("/check-availability")
     public ApiResponse<InventoryCheckResult> checkInventoryAvailability(
-            @RequestBody @Valid Map<String, Integer> requests) {
+            @RequestBody Map<String, Integer> requests) {
         log.info("----> Incoming Check Inventory Availability request {}", JsonUtil.toJson(requests));
 
         InventoryCheckResult result = inventoryService.checkInventoryAvailability(requests);
@@ -126,7 +126,7 @@ public class InventoryController {
     @Operation(summary = "Reserve inventory for multiple products")
     @PostMapping("/reserve")
     public ApiResponse<List<Inventory>> reserveInventory(
-            @RequestBody @Valid Map<String, Integer> requests) {
+            @RequestBody  Map<String, Integer> requests) {
         log.info("----> Incoming Reserve Inventory request {}", JsonUtil.toJson(requests));
 
 
@@ -142,7 +142,7 @@ public class InventoryController {
     @Operation(summary = "Release reserved inventory")
     @PostMapping("/release")
     public ApiResponse<List<Inventory>> releaseInventory(
-            @RequestBody @Valid Map<String, Integer> requests) {
+            @RequestBody  Map<String, Integer> requests) {
         log.info("----> Incoming Release Inventory request {}", JsonUtil.toJson(requests));
 
         // Convert map to list of Inventory objects

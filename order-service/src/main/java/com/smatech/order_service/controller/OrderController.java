@@ -74,7 +74,7 @@ public class OrderController {
     public ApiResponse<Void> handlePaymentFailure(@PathVariable String orderId) {
         log.info("----> Handling payment failure for orderId {}", orderId);
         try {
-            orderService.handlePaymentFailure(orderId);
+            orderService.handlePaymentFailureProcessing(orderId);
             return new ApiResponse<>(null, "Payment failure handled successfully", HttpStatus.OK.value());
         } catch (Exception e) {
             log.error("Error handling payment failure", e);

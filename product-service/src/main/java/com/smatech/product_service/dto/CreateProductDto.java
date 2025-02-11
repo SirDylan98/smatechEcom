@@ -25,7 +25,8 @@ public class CreateProductDto extends BaseDto {
     private Category productCategory;
     private String productImage;
     private Double productPrice;
-    private Boolean onSale;
+    private Boolean onSale =false;
+    private Double productOnSalePrice;
     private Integer startingQuantity;
     private Integer minimumReorderLevel;
     @Enumerated(EnumType.STRING)

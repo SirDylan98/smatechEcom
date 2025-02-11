@@ -24,7 +24,7 @@ public  class UtilsService<T> {
         }
     }
     public static String generateProductCode(String prefix){
-        return new StringBuilder().append(prefix).append(" ").append(prefix + UUID.randomUUID().toString().substring(0,5)).toString();
+        return new StringBuilder().append(prefix).append("-").append(prefix + UUID.randomUUID().toString().substring(0,5)).toString();
 
     }
 }

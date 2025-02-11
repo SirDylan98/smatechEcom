@@ -38,7 +38,7 @@ public class InventoryServiceImpl implements InventoryService {
     private final InventoryRepository inventoryRepository;
     private final OrderServiceClient orderServiceClient;
     @KafkaListener(topics = "payment-failure", groupId = "inventory-service-group")
-    public void handlePaymentFailure(PaymentEvent event) {
+    public void handlePaymentFailure(com.smatech.commons_library.dto.PaymentEvent event) {
         log.info("📌 Inventory Service received failed payment event: {}", event);
         // Process the failed payment for order management
         handlePaymentFailure(event);
@@ -99,7 +99,7 @@ public class InventoryServiceImpl implements InventoryService {
     }
     @Override
     public InventoryCheckResult checkInventoryAvailability(Map<String, Integer> requests) {
-        log.info("Checking inventory availability for {} items", requests.size());
+        log.info("=============>Checking inventory availability for {} items", requests.size());
         List<InventoryItemStatus> statuses = new ArrayList<>();
         boolean hasOutOfStock = false;
 
@@ -123,10 +123,10 @@ public class InventoryServiceImpl implements InventoryService {
             }
         }
         if (!hasOutOfStock) {
-            List<Inventory> reserveResponse = reservedInventory(requests);
-            if (reserveResponse.size() != requests.size()) {
-                throw new InsufficientInventoryException("Not all requested items could be reserved");
-            }
+//            List<Inventory> reserveResponse = reservedInventory(requests);
+//            if (reserveResponse.size() != requests.size()) {
+//                throw new InsufficientInventoryException("Not all requested items could be reserved");
+//            }
         }
         return InventoryCheckResult.builder()
                 .itemStatuses(statuses)

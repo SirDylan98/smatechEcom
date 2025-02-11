@@ -59,6 +59,16 @@ public class ProductController {
         }
         return new ApiResponse<>(response, "Product updated successfully", HttpStatus.OK.value());
     }
+    @Operation(summary = "Put a product on sale")
+    @PutMapping("/putonsale")
+    public ApiResponse<Product> putProductOnSale(@RequestBody @Valid CreateProductDto request) {
+        log.info("----> Incoming Update Product request {}", JsonUtil.toJson(request));
+        Product response = productService.putProductOnSale(request);
+        if (response == null) {
+            return new ApiResponse<>(null, "Product not found", HttpStatus.OK.value());
+        }
+        return new ApiResponse<>(response, "Product updated successfully", HttpStatus.OK.value());
+    }
 
     @Operation(summary = "Delete a product by code")
     @DeleteMapping("/{code}")

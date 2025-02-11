@@ -125,14 +125,23 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public Product putProductOnSale(CreateProductDto createProductDto) {
+        log.info("Putting product on sale with code: {}", createProductDto.getProductCode());
+        Product existingProduct = findByProductCode(createProductDto.getProductCode());
+        existingProduct.setOnSale(true);
+        existingProduct.setProductOnSalePrice(createProductDto.getProductOnSalePrice());
+        return productRepository.save(existingProduct);
+
+    }
+
+    @Override
     public List<Product> searchForProduct(String searchKey) {
         log.info("Searching for products with key: {}", searchKey);
         if (searchKey == null || searchKey.trim().isEmpty()) {
             throw new IllegalArgumentException("Search key cannot be empty");
         }
 
-        String searchTerm = "%" + searchKey.toLowerCase() + "%";
-        return productRepository.findByProductNameLikeOrProductDescriptionLike(searchTerm, searchTerm);
+        return productRepository.searchProducts(searchKey);
     }
 
     private void mapDtoToProduct(CreateProductDto dto, Product product) {
