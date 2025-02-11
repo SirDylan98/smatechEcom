@@ -18,21 +18,21 @@ import java.util.concurrent.ExecutionException;
 public class OrderPlacedEventListener {
 
     private final KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate;
-    private final ObservationRegistry observationRegistry;
+    //private final ObservationRegistry observationRegistry;
 
     @EventListener
     public void handleOrderPlacedEvent(OrderCreatedEvent event) {
         log.info("Order Placed Event Received, Sending OrderPlacedEvent to order-created-topic: {}", JsonUtil.toJson( event.getOrderEventDetails()));
 
-        // Create Observation for Kafka Template
-        try {
-            Observation.createNotStarted("order-created-topic", this.observationRegistry).observeChecked(() -> {
-                CompletableFuture<SendResult<String, OrderCreatedEvent>> future = kafkaTemplate.send("order-created-topic", event);
-                return future.handle((result, throwable) -> CompletableFuture.completedFuture(result));
-            }).get();
-        } catch (InterruptedException | ExecutionException e) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Error while sending message to Kafka", e);
-        }
+//        // Create Observation for Kafka Template
+//        try {
+//            Observation.createNotStarted("order-created-topic", this.observationRegistry).observeChecked(() -> {
+//                CompletableFuture<SendResult<String, OrderCreatedEvent>> future = kafkaTemplate.send("order-created-topic", event);
+//                return future.handle((result, throwable) -> CompletableFuture.completedFuture(result));
+//            }).get();
+//        } catch (InterruptedException | ExecutionException e) {
+//            Thread.currentThread().interrupt();
+//            throw new RuntimeException("Error while sending message to Kafka", e);
+//        }
     }
 }

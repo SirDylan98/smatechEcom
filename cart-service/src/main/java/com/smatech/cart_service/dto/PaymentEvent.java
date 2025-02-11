@@ -1,6 +1,5 @@
-package com.smatech.payment_service.dto;
+package com.smatech.cart_service.dto;
 
-import com.smatech.payment_service.enums.PaymentStatus;
 import lombok.Builder;
 import lombok.Data;
 

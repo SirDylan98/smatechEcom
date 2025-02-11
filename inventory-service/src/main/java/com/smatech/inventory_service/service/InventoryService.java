@@ -21,7 +21,7 @@ public interface InventoryService {
     public List<Inventory> addInventory(List<Inventory> inventory);
     public List<Inventory> removeInventory(List<Inventory> inventory);
     public List<Inventory> reservedInventory(Map<String, Integer> integerMap);
-    public List<Inventory> releaseInventory(List<Inventory> inventory);
+    public List<Inventory> releaseReservedInventory(List<Inventory> inventory);
     public List<Inventory> getAllProductsAtReorderLevel();
     public void notifyInventoryLevel();
 

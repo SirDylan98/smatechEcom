@@ -9,6 +9,7 @@ import com.smatech.cart_service.model.CartItem;
 import com.smatech.cart_service.repository.CartRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,12 @@ public class CartServiceImpl implements CartService {
         return mapToCartResponse(cart);
     }
 
+    @KafkaListener(topics = "payment-success", groupId = "cart-service-group")
+    public void handlePaymentSuccess(PaymentEvent event) {
+        log.info("📌 Cart Service received Success payment event: {}", event);
+        // Process the failed payment for order management
+        clearCart(event.getUserId());
+    }
     @Override
     public CartResponse addToCart( AddToCartRequest request) {
         Cart cart = cartRepository.findById(request.getUserId())

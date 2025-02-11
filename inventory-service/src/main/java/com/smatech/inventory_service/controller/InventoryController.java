@@ -153,7 +153,7 @@ public class InventoryController {
                         .build())
                 .collect(Collectors.toList());
 
-        List<Inventory> result = inventoryService.releaseInventory(inventoryList);
+        List<Inventory> result = inventoryService.releaseReservedInventory(inventoryList);
 
         return new ApiResponse<>(
                 result,

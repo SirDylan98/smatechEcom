@@ -43,6 +43,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final KafkaTemplate<String, PaymentEvent> kafkaTemplate;
+    private final KafkaPaymentPublisher kafkaPaymentPublisher;
 
     @Value("${stripe.secret.key}")
     private String stripeSecretKey;
@@ -73,7 +74,7 @@ public class PaymentServiceImpl implements PaymentService {
             paymentRepository.save(payment);
 
             // Send payment initiated event with checkout URL
-            return  payment;
+            return payment;
 
 
         } catch (Exception e) {
@@ -82,6 +83,7 @@ public class PaymentServiceImpl implements PaymentService {
             return null;
         }
     }
+
     private Session createStripeCheckoutSession(Payment payment) throws StripeException {
         Stripe.apiKey = stripeSecretKey;
 
@@ -110,13 +112,14 @@ public class PaymentServiceImpl implements PaymentService {
 
         return Session.create(params);
     }
+
     @Override
     @Transactional
     public void handleStripeWebhook(String payload, String signatureHeader) {
         try {
             // Verify webhook signature
             Event event = Webhook.constructEvent(payload, signatureHeader, webhookSecret);
-            log.info("<========================> Yes sir  tawinner1 ==================================> {}",event.toString());
+            log.info("<========================> Yes sir  tawinner1 ==================================> {}", event.toString());
 
             switch (event.getType()) {
                 case "checkout.session.completed":
@@ -133,7 +136,7 @@ public class PaymentServiceImpl implements PaymentService {
             }
         } catch (Exception e) {
             log.error("==================> Error processing webhook", e);
-            throw new PaymentProcessingException("Webhook processing failed "+e.getMessage());
+            throw new PaymentProcessingException("Webhook processing failed " + e.getMessage());
         }
     }
 
@@ -149,25 +152,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         return payment;
     }
-
-//    private PaymentIntent createStripePaymentIntent(Payment payment) throws StripeException, StripeException {
-//        Stripe.apiKey = stripeSecretKey;
-//
-//        PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
-//                .setAmount(payment.getAmount().longValue() * 100) // Convert to cents
-//                .setCurrency(payment.getCurrency().toLowerCase())
-//                .setAutomaticPaymentMethods(
-//                        PaymentIntentCreateParams.AutomaticPaymentMethods
-//                                .builder()
-//                                .setEnabled(true)
-//                                .build()
-//                )
-//                .putMetadata("orderId", payment.getOrderId())
-//                .setReceiptEmail(payment.getCustomerEmail())
-//                .build();
-//
-//        return PaymentIntent.create(params);
-//    }
 
 
     private void handlePaymentSuccess(Event event) {
@@ -198,40 +182,54 @@ public class PaymentServiceImpl implements PaymentService {
             // Send success event
             PaymentEvent paymentEvent = PaymentEvent.builder()
                     .orderId(payment.getOrderId())
+                    .userId(payment.getUserId())
                     .status(PaymentStatus.COMPLETED)
                     .amount(payment.getAmount())
                     .timestamp(LocalDateTime.now())
                     .build();
+
+            kafkaPaymentPublisher.publishPaymentEventSync(paymentEvent,KafkaPaymentPublisher.PAYMENT_SUCCESS_TOPIC);
         } else {
             throw new IllegalStateException("Unexpected event object type: " + stripeObject.getClass());
         }
 
 
-        //kafkaTemplate.send("payment-success", paymentEvent);
     }
 
     private void handlePaymentFailure(Event event) {
-        Session session = (Session) event.getDataObjectDeserializer().getObject().get();
-        String sessionId = session.getId();
+        StripeObject stripeObject = event.getDataObjectDeserializer().getObject().orElseThrow(
+                () -> new IllegalStateException("Invalid event data")
+        );
 
-        log.info("<========================> Processing payment for session: {} ==================================>", sessionId);
+        if (stripeObject instanceof Session) {
+            Session session = (Session) stripeObject;
 
-        Payment payment = paymentRepository.findBySessionId(sessionId)
-                .orElseThrow(() -> new EntityNotFoundException("Payment not found for session: " + sessionId));
 
-        payment.setStatus(PaymentStatus.FAILED);
-        payment.setFailureReason("Checkout session expired");
-        paymentRepository.save(payment);
+            String orderId = session.getMetadata().get("orderId");
 
-        // Create payment event
-        PaymentEvent paymentEvent = PaymentEvent.builder()
-                .orderId(payment.getOrderId())
-                .status(PaymentStatus.FAILED)
-                .errorMessage(payment.getFailureReason())
-                .timestamp(LocalDateTime.now())
-                .build();
+            if (orderId == null || orderId.isEmpty()) {
+                throw new IllegalStateException("Order ID is missing in metadata");
+            }
 
-        //kafkaTemplate.send("payment-failure", paymentEvent);
+            log.info("✅ Payment successful for Order ID: {}", orderId);
+            Payment payment = paymentRepository.findByOrderId(orderId)
+                    .orElseThrow(() -> new EntityNotFoundException("Payment not found for session: " + orderId));
+
+            payment.setStatus(PaymentStatus.FAILED);
+            payment.setFailureReason("Checkout session expired");
+            paymentRepository.save(payment);
+
+            // Create payment event
+            PaymentEvent paymentEvent = PaymentEvent.builder()
+                    .orderId(payment.getOrderId())
+                    .status(PaymentStatus.FAILED)
+                    .userId(payment.getUserId())
+                    .errorMessage(payment.getFailureReason())
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+            kafkaPaymentPublisher.publishPaymentEventSync(paymentEvent,KafkaPaymentPublisher.PAYMENT_FAILURE_TOPIC);
+        }
     }
 
     private void handlePaymentFailure(OrderEvent orderEvent, Exception e) {
@@ -254,6 +252,6 @@ public class PaymentServiceImpl implements PaymentService {
                 .timestamp(LocalDateTime.now())
                 .build();
 
-       // kafkaTemplate.send("payment-failure", paymentEvent);
+        // kafkaTemplate.send("payment-failure", paymentEvent);
     }
 }

@@ -14,6 +14,6 @@ public interface InventoryRepository extends JpaRepository<Inventory,String> {
     boolean existsByProductCode(String productCode);
     void deleteByProductCode(String productCode);
 
-    @Query("SELECT i FROM Inventory i WHERE i.quantity <= i.restockLevel")
+    @Query("SELECT i FROM Inventory i WHERE i.availableQuantity <= i.restockLevel")
     List<Inventory> findByQuantityLessThanEqualToRestockLevel();
 }
