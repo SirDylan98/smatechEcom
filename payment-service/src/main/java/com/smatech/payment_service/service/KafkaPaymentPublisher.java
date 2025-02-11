@@ -31,6 +31,7 @@ public class KafkaPaymentPublisher {
 
 
     public void publishPaymentEventSync(PaymentEvent event, String topic) {
+        log.info("=======> Message sent successfully event: {}",JsonUtil.toJson(event));
         int retryCount = 0;
         while (retryCount < MAX_RETRIES) {
             try {

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
  * Email: dylandzvenetashinga@gmail.com
  * Created on: 2/11/2025
  */
-@FeignClient(name = "order-service", url = "http://localhost:8083/api/v1/carts")
+@FeignClient(name = "order-service", url = "http://localhost:8083/api/v1/orders")
 public interface OrderServiceClient {
 
     @GetMapping("/{orderId}")

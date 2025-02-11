@@ -9,6 +9,7 @@ package com.smatech.payment_service.service;
 
 import com.smatech.commons_library.dto.PaymentEvent;
 import com.smatech.commons_library.dto.PaymentStatus;
+import com.smatech.commons_library.dto.Topics;
 import com.smatech.payment_service.dto.OrderEvent;
 import com.smatech.payment_service.exception.PaymentProcessingException;
 import com.smatech.payment_service.model.Payment;
@@ -184,7 +185,7 @@ public class PaymentServiceImpl implements PaymentService {
                     .timestamp(LocalDateTime.now())
                     .build();
 
-            kafkaPaymentPublisher.publishPaymentEventSync(paymentEvent,KafkaPaymentPublisher.PAYMENT_SUCCESS_TOPIC);
+            kafkaPaymentPublisher.publishPaymentEventSync(paymentEvent, Topics.PAYMENT_SUCCESS_TOPIC);
         } else {
             throw new IllegalStateException("Unexpected event object type: " + stripeObject.getClass());
         }
@@ -224,7 +225,7 @@ public class PaymentServiceImpl implements PaymentService {
                     .timestamp(LocalDateTime.now())
                     .build();
 
-            kafkaPaymentPublisher.publishPaymentEventSync(paymentEvent,KafkaPaymentPublisher.PAYMENT_FAILURE_TOPIC);
+            kafkaPaymentPublisher.publishPaymentEventSync(paymentEvent,Topics.PAYMENT_FAILURE_TOPIC);
         }
     }
 

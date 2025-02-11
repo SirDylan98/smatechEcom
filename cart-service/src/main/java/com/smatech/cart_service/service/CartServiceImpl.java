@@ -7,9 +7,13 @@ import com.smatech.cart_service.exceptions.CartNotFoundException;
 import com.smatech.cart_service.model.Cart;
 import com.smatech.cart_service.model.CartItem;
 import com.smatech.cart_service.repository.CartRepository;
+import com.smatech.cart_service.utils.JsonUtil;
+import com.smatech.commons_library.dto.PaymentEvent;
+import com.smatech.commons_library.dto.Topics;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,16 +41,18 @@ public class CartServiceImpl implements CartService {
         return mapToCartResponse(cart);
     }
 
-    @KafkaListener(topics = "payment-success", groupId = "cart-service-group")
-    public void handlePaymentSuccess(PaymentEvent event) {
-        log.info("📌 Cart Service received Success payment event: {}", event);
+    @KafkaListener(topics = Topics.PAYMENT_SUCCESS_TOPIC, groupId = "cart-service-group")
+    public void handlePaymentSuccess(PaymentEvent event, Acknowledgment acknowledgment) {
+        log.info("=============================> Cart Service received Success payment event: {}", event);
         // Process the failed payment for order management
         clearCart(event.getUserId());
+        acknowledgment.acknowledge();
     }
     @Override
     public CartResponse addToCart( AddToCartRequest request) {
-        Cart cart = cartRepository.findById(request.getUserId())
+        Cart cart = cartRepository.getCartByIdWithActiveItems(request.getUserId())
                 .orElseGet(() -> createNewCart(request.getUserId()));
+        log.info("============> This is the cart state  {}", JsonUtil.toJson(cart));
 
 
         Optional<CartItem> existingItem = cart.getItems().stream()
@@ -147,6 +153,7 @@ public class CartServiceImpl implements CartService {
         cart.getItems().stream().forEach(cartItem -> cartItem.setStatus(Status.PROCESSED));
         cart.setLastModifiedDate(LocalDateTime.now());
         cartRepository.save(cart);
+        log.info("========================> Cart for user {} has been cleared", userId);
     }
 
     @Override

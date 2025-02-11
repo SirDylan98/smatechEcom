@@ -1,10 +1,13 @@
 package com.smatech.inventory_service.service;
 
+import com.smatech.commons_library.dto.PaymentEvent;
+import com.smatech.commons_library.dto.Topics;
 import com.smatech.inventory_service.client.OrderServiceClient;
 import com.smatech.inventory_service.dto.*;
 import com.smatech.inventory_service.enums.InventoryStatus;
 import com.smatech.inventory_service.exceptions.DuplicateResourceException;
 import com.smatech.inventory_service.exceptions.InsufficientInventoryException;
+import com.smatech.inventory_service.exceptions.InventoryFulfilmentException;
 import com.smatech.inventory_service.model.Inventory;
 import com.smatech.inventory_service.repository.InventoryRepository;
 import com.smatech.inventory_service.utils.ApiResponse;
@@ -14,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,17 +41,19 @@ public class InventoryServiceImpl implements InventoryService {
 
     private final InventoryRepository inventoryRepository;
     private final OrderServiceClient orderServiceClient;
-    @KafkaListener(topics = "payment-failure", groupId = "inventory-service-group")
-    public void handlePaymentFailure(com.smatech.commons_library.dto.PaymentEvent event) {
-        log.info("📌 Inventory Service received failed payment event: {}", event);
+    @KafkaListener(topics = Topics.PAYMENT_FAILURE_TOPIC, groupId = "inventory-service-group")
+    public void handlePaymentFailure(PaymentEvent event, Acknowledgment acknowledgment) {
+        log.info(" =====================>Inventory Service received failed payment event: {}", event);
         // Process the failed payment for order management
-        handlePaymentFailure(event);
+        processPaymentFailure(event);
+        acknowledgment.acknowledge();
     }
-    @KafkaListener(topics = "payment-success", groupId = "inventory-service-group")
-    public void handlePaymentSuccess(PaymentEvent event) {
-        log.info("📌 Inventory Service received Success payment event: {}", event);
+    @KafkaListener(topics = Topics.PAYMENT_SUCCESS_TOPIC, groupId = "inventory-service-group")
+    public void handlePaymentSuccess(PaymentEvent event, Acknowledgment acknowledgment) {
+        log.info("=====================> Inventory Service received Success payment event: {}", event);
         // Process the failed payment for order management
-        handlePaymentSuccess(event);
+        processPaymentSuccess(event);
+        acknowledgment.acknowledge();
     }
 
     @Override
@@ -255,7 +261,7 @@ public class InventoryServiceImpl implements InventoryService {
         for (Inventory inventory : inventoryList) {
             Inventory existingInventory = inventoryRepository.findByProductCode(inventory.getProductCode())
                     .orElseThrow(() -> new EntityNotFoundException("Inventory not found for product: " + inventory.getProductCode()));
-            existingInventory.setReservedQuantity(existingInventory.getReservedQuantity() - inventory.getReservedQuantity());
+            existingInventory.setReservedQuantity(existingInventory.getReservedQuantity() - inventory.getAvailableQuantity());
             existingInventory.setLastUpdateOnRestock(LocalDateTime.now());
             updatedInventories.add(inventoryRepository.save(existingInventory));
         }
@@ -284,11 +290,11 @@ public class InventoryServiceImpl implements InventoryService {
 
     }
     public  void processPaymentSuccess(PaymentEvent event){
-        log.error("Payment failed for order: {}", event.getOrderId());
+        log.error("Payment Success for order: {}", event.getOrderId());
         // first we get order items and their quantities and release the inventory
         ApiResponse<OrderResponse> orderResponseApiResponse = orderServiceClient.getOrder(event.getOrderId());
         if(orderResponseApiResponse.getStatusCode()!= HttpStatus.OK.value()){
-
+            throw new InventoryFulfilmentException("Error getting order response: " );
         }
         List< OrderItemResponse> orderItems = orderResponseApiResponse.getBody().getOrderItems();
         List<Inventory> inventoryList = orderItems.stream().map(orderItemResponse -> {
@@ -296,6 +302,7 @@ public class InventoryServiceImpl implements InventoryService {
             inventory.setProductCode(orderItemResponse.getProductId());
 
             inventory.setReservedQuantity(orderItemResponse.getQuantity());
+            log.info("=======> inventory for release: {}",JsonUtil.toJson(inventory));
             //inventory.setRestockLevel(orderItemResponse.getReorderLevel());
             return inventory;
         }).collect(Collectors.toList());

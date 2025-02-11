@@ -2,6 +2,7 @@ package com.smatech.order_service.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.smatech.commons_library.dto.PaymentEvent;
+import com.smatech.commons_library.dto.Topics;
 import com.smatech.order_service.clients.CartServiceClient;
 import com.smatech.order_service.clients.InventoryServiceClient;
 import com.smatech.order_service.clients.PaymentServiceClient;
@@ -23,6 +24,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,19 +50,22 @@ public class OrderServiceImpl implements OrderService {
     private final KafkaTemplate<String, OrderCreatedEvent> kafkaTemplate;
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    @KafkaListener(topics = "payment-failure2", groupId = "order-service-group")
-    public void handlePaymentFailure(PaymentEvent event) {
+    @KafkaListener(topics = Topics.PAYMENT_FAILURE_TOPIC, groupId = "order-service-group")
+    public void handlePaymentFailure(PaymentEvent event, Acknowledgment acknowledgment) {
 
-        log.info("📌=========================> Order Service received failed payment event: {}", event);
+        log.info("=========================> Order Service received failed payment event: {}", event);
         // Process the failed payment for order management
         handlePaymentFailureProcessing(event.getOrderId());
+        acknowledgment.acknowledge();
     }
-    @KafkaListener(topics = "payment-success2", groupId = "order-service-group")
-    public void handlePaymentSuccess(PaymentEvent event) {
+    @KafkaListener(topics = Topics.PAYMENT_SUCCESS_TOPIC, groupId = "order-service-group")
+    public void handlePaymentSuccess(PaymentEvent event, Acknowledgment acknowledgment) {
 
-        log.info("📌 Order Service received Success payment event: {}", event);
+        log.info("========================> Order Service received Success payment event: {}", event);
         // Process the failed payment for order management
+
         handlePaymentSuccessProcessing(event.getOrderId());
+        acknowledgment.acknowledge();
     }
     @Override
     @Transactional

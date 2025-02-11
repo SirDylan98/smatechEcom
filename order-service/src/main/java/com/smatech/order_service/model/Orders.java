@@ -25,7 +25,7 @@ public class Orders {
     private String userId;
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "orderId")
     private List<OrderItem> orderItems;
     private Double totalAmount;
