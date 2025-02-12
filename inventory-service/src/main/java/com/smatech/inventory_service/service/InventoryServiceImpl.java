@@ -261,7 +261,7 @@ public class InventoryServiceImpl implements InventoryService {
         for (Inventory inventory : inventoryList) {
             Inventory existingInventory = inventoryRepository.findByProductCode(inventory.getProductCode())
                     .orElseThrow(() -> new EntityNotFoundException("Inventory not found for product: " + inventory.getProductCode()));
-            existingInventory.setReservedQuantity(existingInventory.getReservedQuantity() - inventory.getAvailableQuantity());
+            existingInventory.setReservedQuantity(existingInventory.getReservedQuantity() - inventory.getReservedQuantity());
             existingInventory.setLastUpdateOnRestock(LocalDateTime.now());
             updatedInventories.add(inventoryRepository.save(existingInventory));
         }

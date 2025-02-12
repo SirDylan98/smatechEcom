@@ -11,10 +11,24 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by DylanDzvene
@@ -118,5 +132,46 @@ public class ProductController {
         log.info("----> Searching products with key: {}", searchKey);
         List<Product> response = productService.searchForProduct(searchKey);
         return new ApiResponse<>(response, "Search results retrieved successfully", HttpStatus.OK.value());
+    }
+    private static final String UPLOAD_DIR = System.getProperty("user.dir") + "/uploads/";
+
+    @PostMapping("/upload")
+    public ResponseEntity<Map<String, String>> uploadFile(@RequestParam("file") MultipartFile file) {
+        try {
+            // Ensure directory exists
+            File uploadDir = new File(UPLOAD_DIR);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
+
+            // Save the file
+            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+            Path filePath = Paths.get(UPLOAD_DIR + fileName);
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+
+            // Return file path
+            Map<String, String> response = new HashMap<>();
+            response.put("filePath", fileName);
+            return ResponseEntity.ok(response);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "File upload failed"));
+        }
+    }
+
+    // Serve images statically
+    @GetMapping("/uploads/{fileName}")
+    public ResponseEntity<Resource> getFile(@PathVariable String fileName) throws IOException {
+        java.nio.file.Path filePath = Paths.get(UPLOAD_DIR + fileName);
+        org.springframework.core.io.Resource resource = new UrlResource(filePath.toUri());
+        //log.info("===========> this is the file path {}",JsonUtil.toJson(resource));
+
+        if (!resource.exists() || !resource.isReadable()) {
+            throw new RuntimeException("Could not read file: " + fileName);
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(resource);
     }
 }

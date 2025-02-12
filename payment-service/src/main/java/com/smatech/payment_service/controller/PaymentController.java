@@ -1,11 +1,17 @@
 package com.smatech.payment_service.controller;
 
+import com.smatech.commons_library.dto.PaymentStatus;
 import com.smatech.payment_service.dto.OrderEvent;
+import com.smatech.payment_service.exception.PaymentProcessingException;
 import com.smatech.payment_service.model.Payment;
 import com.smatech.payment_service.service.PaymentService;
 import com.smatech.payment_service.utils.ApiResponse;
+import com.stripe.Stripe;
+import com.stripe.exception.StripeException;
+import com.stripe.model.checkout.Session;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -47,5 +53,12 @@ public class PaymentController {
             return new ApiResponse<>(null, "Failed to process payment request: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
-
+    @GetMapping("/check-payment/{sessionId}")
+    public PaymentStatus checkPaymentStatus(@PathVariable String sessionId) {
+      return  paymentService.checkPaymentStatus(sessionId);
+    }
+    @GetMapping("/check-session/{paymentIntent}")
+    public String getSessionFromIntent(@PathVariable String paymentIntent) {
+        return  paymentService.getSessionFromPaymentIntent(paymentIntent).getId();
+    }
 }
