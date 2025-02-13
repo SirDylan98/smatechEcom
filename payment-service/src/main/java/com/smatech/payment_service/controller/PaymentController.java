@@ -57,6 +57,10 @@ public class PaymentController {
     public PaymentStatus checkPaymentStatus(@PathVariable String sessionId) {
       return  paymentService.checkPaymentStatus(sessionId);
     }
+    @GetMapping("/getpaymentbysessionid/{sessionId}")
+    public Payment getPaymentBySessionId(@PathVariable String sessionId) {
+        return  paymentService.getPaymentBySessionId(sessionId);
+    }
     @GetMapping("/check-session/{paymentIntent}")
     public String getSessionFromIntent(@PathVariable String paymentIntent) {
         return  paymentService.getSessionFromPaymentIntent(paymentIntent).getId();

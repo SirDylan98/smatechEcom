@@ -25,10 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by DylanDzvene
@@ -46,7 +43,7 @@ public class ProductController {
 
     @Operation(summary = "Create a new product")
     @PostMapping("/create")
-    public ApiResponse<Product> createProduct(@RequestBody @Valid CreateProductDto request) {
+    public ApiResponse<Product> createProduct(@RequestBody  CreateProductDto request) {
         log.info("----> Incoming Create Product request {}", JsonUtil.toJson(request));
         ApiResponse<Product> response = productProcessor.createProduct(request);
         return response;
@@ -62,14 +59,24 @@ public class ProductController {
         }
         return new ApiResponse<>(response, "Product retrieved successfully", HttpStatus.OK.value());
     }
+    @Operation(summary = "Find product by Set of code")
+    @GetMapping("/getProductInCode")
+    public ApiResponse<List<Product>> findByProductsCode(@RequestParam Set<String> codeSet) {
+        log.info("----> Fetching product with code: {}", codeSet);
+        List<Product>  response = productService.findByProductInCodes(codeSet);
+        if (response == null) {
+            return new ApiResponse<>(null, "Products not found", HttpStatus.NOT_FOUND.value());
+        }
+        return new ApiResponse<>(response, "Product retrieved successfully", HttpStatus.OK.value());
+    }
 
     @Operation(summary = "Update an existing product")
     @PutMapping("/update")
-    public ApiResponse<Product> updateProduct(@RequestBody @Valid CreateProductDto request) {
+    public ApiResponse<Product> updateProduct(@RequestBody CreateProductDto request) {
         log.info("----> Incoming Update Product request {}", JsonUtil.toJson(request));
         Product response = productService.updateProduct(request);
         if (response == null) {
-            return new ApiResponse<>(null, "Product not found", HttpStatus.OK.value());
+            return new ApiResponse<>(null, "Product not found", HttpStatus.NOT_FOUND.value());
         }
         return new ApiResponse<>(response, "Product updated successfully", HttpStatus.OK.value());
     }
@@ -93,7 +100,7 @@ public class ProductController {
     }
 
     @Operation(summary = "Retrieve all products")
-    @GetMapping
+    @GetMapping("/getall")
     public ApiResponse<List<Product>> findAllProducts() {
         log.info("----> Fetching all products");
         List<Product> response = productService.findAllProducts();
@@ -127,8 +134,8 @@ public class ProductController {
     }
 
     @Operation(summary = "Search products by keyword")
-    @GetMapping("/search")
-    public ApiResponse<List<Product>> searchProducts(@RequestParam String searchKey) {
+    @GetMapping("/search/{searchKey}")
+    public ApiResponse<List<Product>> searchProducts(@PathVariable("searchKey") String searchKey) {
         log.info("----> Searching products with key: {}", searchKey);
         List<Product> response = productService.searchForProduct(searchKey);
         return new ApiResponse<>(response, "Search results retrieved successfully", HttpStatus.OK.value());

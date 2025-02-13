@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -69,10 +70,19 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    public List<Product> findByProductInCodes(Set<String> codeSet) {
+        return productRepository.findByProductCodeIn(codeSet);
+    }
+
+    @Override
     public Product updateProduct(CreateProductDto createProductDto) {
         log.info("Updating product with code: {}", createProductDto.getProductCode());
 
         Product existingProduct = findByProductCode(createProductDto.getProductCode());
+        existingProduct.setProductName(createProductDto.getProductName().isEmpty()?existingProduct.getProductName() : createProductDto.getProductName());
+        existingProduct.setProductDescription(createProductDto.getProductDescription().isEmpty()? existingProduct.getProductDescription() : createProductDto.getProductDescription());
+        existingProduct.setProductPrice(createProductDto.getProductPrice()==0? existingProduct.getProductPrice() : createProductDto.getProductPrice());
+        existingProduct.setProductCategory(createProductDto.getProductCategory());
         mapDtoToProduct(createProductDto, existingProduct);
 
         return productRepository.save(existingProduct);

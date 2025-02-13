@@ -1,5 +1,6 @@
 package com.smatech.cart_service.service;
 
+import com.smatech.cart_service.client.ProductsClient;
 import com.smatech.cart_service.dto.*;
 import com.smatech.cart_service.enums.Status;
 import com.smatech.cart_service.exceptions.CartItemNotFoundException;
@@ -7,8 +8,10 @@ import com.smatech.cart_service.exceptions.CartNotFoundException;
 import com.smatech.cart_service.model.Cart;
 import com.smatech.cart_service.model.CartItem;
 import com.smatech.cart_service.repository.CartRepository;
+import com.smatech.cart_service.utils.ApiResponse;
 import com.smatech.cart_service.utils.JsonUtil;
 import com.smatech.commons_library.dto.PaymentEvent;
+import com.smatech.commons_library.dto.Product;
 import com.smatech.commons_library.dto.Topics;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,9 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -34,11 +35,55 @@ import java.util.stream.Collectors;
 @Transactional
 public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
+    private final ProductsClient productsClient;
+
     @Override
     public CartResponse getCart(String userId) {
         Cart cart = cartRepository.findById(userId)
                 .orElseThrow(() -> new CartNotFoundException(userId));
-        return mapToCartResponse(cart);
+        Set<String> codeSet = new HashSet<>();
+        for (CartItem cartItem : cart.getItems()) {
+            codeSet.add(cartItem.getProductId());
+        }
+        ApiResponse<List<Product>> allProducts = productsClient.findByProductsCode(codeSet);
+        if (allProducts.getStatusCode() != 200) {
+            throw new RuntimeException("Failed to retrieve products from Product Service");
+        }
+        List<Product> productList = allProducts.getBody(); // Get the product list
+
+        // Map product codes to actual products for easy lookup
+        Map<String, Product> productMap = productList.stream()
+                .collect(Collectors.toMap(Product::getProductCode, product -> product));
+
+        double totalCartPrice = 0.0; // Initialize cart price
+
+        // Iterate over cart items, find the corresponding product, and update price
+        List<CartItemDTO> cartItemDTOList = new ArrayList<CartItemDTO>();
+
+        for (CartItem cartItem : cart.getItems().stream().filter(cartItemDTO -> cartItemDTO.getStatus().equals(Status.ACTIVE)).collect(Collectors.toList())) {
+            Product product = productMap.get(cartItem.getProductId());
+            if (product == null) {
+                throw new RuntimeException("Product not found for Cart Item: " + cartItem.getProductId());
+            }
+            CartItemDTO cartItemDTO = CartItemDTO.builder()
+                    .productName(product.getProductName())
+                    .price(product.getOnSale() ? product.getProductOnSalePrice() : product.getProductPrice())
+                    .quantity(cartItem.getQuantity())
+                    .productImage(product.getProductImage())
+                    .productId(cartItem.getProductId())
+                    .build();
+            cartItemDTOList.add(cartItemDTO);
+
+        }
+        return CartResponse.builder()
+                .userId(cart.getUserId())
+                .items(cartItemDTOList)
+                .lastModifiedDate(cart.getLastModifiedDate())
+                .build();
+
+
+
+
     }
 
     @KafkaListener(topics = Topics.PAYMENT_SUCCESS_TOPIC, groupId = "cart-service-group")
@@ -48,8 +93,9 @@ public class CartServiceImpl implements CartService {
         clearCart(event.getUserId());
         acknowledgment.acknowledge();
     }
+
     @Override
-    public CartResponse addToCart( AddToCartRequest request) {
+    public CartResponse addToCart(AddToCartRequest request) {
         Cart cart = cartRepository.getCartByIdWithActiveItems(request.getUserId())
                 .orElseGet(() -> createNewCart(request.getUserId()));
         log.info("============> This is the cart state  {}", JsonUtil.toJson(cart));
@@ -177,7 +223,7 @@ public class CartServiceImpl implements CartService {
                 .map(item -> CartItemDTO.builder()
                         .productId(item.getProductId())
                         .productName(item.getProductName())
-                     .quantity(item.getQuantity())
+                        .quantity(item.getQuantity())
                         .build())
                 .collect(Collectors.toList());
 

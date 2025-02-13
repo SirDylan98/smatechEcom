@@ -9,5 +9,6 @@ public interface PaymentService {
     public void handleStripeWebhook(String payload, String signatureHeader);
     public Payment processPaymentRequest(OrderEvent orderEvent);
     public PaymentStatus checkPaymentStatus(String sessionId);
+    public Payment getPaymentBySessionId(String sessionId);
     public Session getSessionFromPaymentIntent(String paymentIntentId);
 }

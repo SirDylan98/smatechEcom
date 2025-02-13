@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import javax.management.monitor.StringMonitor;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Created by DylanDzvene
@@ -19,6 +20,7 @@ import java.util.Optional;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, String> {
     Optional<Product> findByProductCode(String productCode);
+    List<Product> findByProductCodeIn(Set<String> productCodes);
     boolean existsByProductCode(String productCode);
     void deleteByProductCode(String productCode);
     List<Product> findByProductCategory(Category category);

@@ -94,36 +94,11 @@ public class PaymentServiceImpl implements PaymentService {
 
     private Session createStripeCheckoutSession(Payment payment) throws StripeException {
         Stripe.apiKey = stripeSecretKey;
-//        SessionCreateParams params = SessionCreateParams.builder()
-//                .setMode(SessionCreateParams.Mode.PAYMENT)
-//                .setSuccessUrl("http://localhost:8085/api/v1/webhook/stripe/success?session_id={CHECKOUT_SESSION_ID}")
-//                .setCancelUrl("http://localhost:8085/api/v1/webhook/stripe/cancel?session_id={CHECKOUT_SESSION_ID}")
-//                .setPaymentIntentData(
-//                        SessionCreateParams.PaymentIntentData.builder()
-//                                .putMetadata("orderId", payment.getOrderId())
-//                                .build()
-//                )
-//                .addLineItem(
-//                        SessionCreateParams.LineItem.builder()
-//                                .setPriceData(
-//                                        SessionCreateParams.LineItem.PriceData.builder()
-//                                                .setCurrency(payment.getCurrency().toLowerCase())
-//                                                .setUnitAmount(payment.getAmount().longValue() * 100L) // Convert to cents
-//                                                .setProductData(
-//                                                        SessionCreateParams.LineItem.PriceData.ProductData.builder()
-//                                                                .setName("Order #" + payment.getOrderId())
-//                                                                .build()
-//                                                )
-//                                                .build()
-//                                )
-//                                .setQuantity(1L)
-//                                .build()
-//                )
-//                .build();
+
         SessionCreateParams params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.PAYMENT)
-                .setSuccessUrl("http://localhost:8085/api/v1" + "/webhook/stripe/success?session_id={CHECKOUT_SESSION_ID}")
-                .setCancelUrl("http://localhost:8085/api/v1" + "/webhook/stripe/cancel?session_id={CHECKOUT_SESSION_ID}")
+                .setSuccessUrl("http://localhost:5173/payment-success?session_id={CHECKOUT_SESSION_ID}")
+                .setCancelUrl("http://localhost:5173/payment-cancel?session_id={CHECKOUT_SESSION_ID}")
                 .addLineItem(
                         SessionCreateParams.LineItem.builder()
                                 .setPriceData(
@@ -248,12 +223,7 @@ public class PaymentServiceImpl implements PaymentService {
                     paymentIntent.getLastPaymentError().getMessage() : "Payment failed";
             String failureCode = paymentIntent.getLastPaymentError() != null ?
                     paymentIntent.getLastPaymentError().getCode() : "unknown";
-            Session session= getSessionFromPaymentIntent(intentId);
-
-//            String orderId = paymentIntent.getMetadata().get("orderId");
-//            if (orderId == null || orderId.isEmpty()) {
-//                throw new IllegalStateException("Order ID is missing in metadata");
-//            }
+            Session session = getSessionFromPaymentIntent(intentId);
 
 
             Payment payment = paymentRepository.findBySessionId(session.getId())
@@ -271,12 +241,13 @@ public class PaymentServiceImpl implements PaymentService {
                     .status(PaymentStatus.FAILED)
                     .userId(payment.getUserId())
                     .errorMessage(failureMessage)
-                    //.errorCode(failureCode)  // Include error code if your PaymentEvent has this field
                     .timestamp(LocalDateTime.now())
                     .build();
 
             kafkaPaymentPublisher.publishPaymentEventSync(paymentEvent, Topics.PAYMENT_FAILURE_TOPIC);
-        }}
+        }
+    }
+
     private void handlePaymentFailure(Event event) {
         StripeObject stripeObject = event.getDataObjectDeserializer().getObject().orElseThrow(
                 () -> new IllegalStateException("Invalid event data")
@@ -315,6 +286,7 @@ public class PaymentServiceImpl implements PaymentService {
             kafkaPaymentPublisher.publishPaymentEventSync(paymentEvent, Topics.PAYMENT_FAILURE_TOPIC);
         }
     }
+
     public Session getSessionFromPaymentIntent(String paymentIntentId) {
         try {
             Stripe.apiKey = stripeSecretKey;
@@ -373,6 +345,12 @@ public class PaymentServiceImpl implements PaymentService {
             log.error("Error checking payment status: {}", e.getMessage());
             throw new PaymentProcessingException("Failed to check payment status");
         }
+    }
+
+    @Override
+    public Payment getPaymentBySessionId(String sessionId) {
+
+        return paymentRepository.findBySessionId(sessionId).orElseThrow(() -> new EntityNotFoundException("Payment not found for session: " + sessionId));
     }
 
     private void handlePaymentFailure(OrderEvent orderEvent, Exception e) {

@@ -40,9 +40,10 @@ public class CartProcessor {
         if (idempotencyBody.getRequestStatus().equals(IdempotencyStatus.NOT_FOUND.name())) {
             // New request - process it
             try {
+                request.setQuantity(1);// because you can only add things from cart one by one
                 CartResponse response = cartService.addToCart( request);
 
-                // Store the result for future idempotency checks
+
                 IdempotencyService.setCartServiceIdomMap(idempotencyKey,
                         IdempotencyBody.builder()
                                 .requestStatus(IdempotencyStatus.SUCCESS.name())
