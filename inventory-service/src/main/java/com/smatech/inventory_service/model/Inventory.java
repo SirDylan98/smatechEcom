@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 public class Inventory {
     @Id
     private String productCode;
+    private String productName;
     private int availableQuantity;
     private int reservedQuantity;
     private int restockLevel;

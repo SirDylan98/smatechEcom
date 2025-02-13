@@ -75,9 +75,8 @@ public class InventoryServiceImpl implements InventoryService {
                 .orElseThrow(() -> new EntityNotFoundException("Inventory not found for product: " + inventory.getProductCode()));
 
         existingInventory.setAvailableQuantity(inventory.getAvailableQuantity());
-        existingInventory.setRestockLevel(inventory.getRestockLevel());
         existingInventory.setLastUpdateOnRestock(LocalDateTime.now());
-        existingInventory.setReservedQuantity(inventory.getReservedQuantity());
+
 
         return inventoryRepository.save(existingInventory);
     }
@@ -129,10 +128,7 @@ public class InventoryServiceImpl implements InventoryService {
             }
         }
         if (!hasOutOfStock) {
-//            List<Inventory> reserveResponse = reservedInventory(requests);
-//            if (reserveResponse.size() != requests.size()) {
-//                throw new InsufficientInventoryException("Not all requested items could be reserved");
-//            }
+
         }
         return InventoryCheckResult.builder()
                 .itemStatuses(statuses)

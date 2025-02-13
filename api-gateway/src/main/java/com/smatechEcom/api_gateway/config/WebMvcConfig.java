@@ -1,4 +1,4 @@
-package com.smatech.payment_service.config;
+package com.smatechEcom.api_gateway.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

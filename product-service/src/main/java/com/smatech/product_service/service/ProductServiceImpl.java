@@ -53,6 +53,7 @@ public class ProductServiceImpl implements ProductService {
         if (createProductDto.getStartingQuantity() != null) {
             inventoryClient.initializeInventory(Inventory.builder()
                     .productCode(savedProduct.getProductCode())
+                            .productName(savedProduct.getProductName())
                     .availableQuantity(createProductDto.getStartingQuantity())
                     .reservedQuantity(0)
                     .restockLevel(createProductDto.getMinimumReorderLevel())
@@ -83,6 +84,7 @@ public class ProductServiceImpl implements ProductService {
         existingProduct.setProductDescription(createProductDto.getProductDescription().isEmpty()? existingProduct.getProductDescription() : createProductDto.getProductDescription());
         existingProduct.setProductPrice(createProductDto.getProductPrice()==0? existingProduct.getProductPrice() : createProductDto.getProductPrice());
         existingProduct.setProductCategory(createProductDto.getProductCategory());
+        existingProduct.setProductOnSalePrice(createProductDto.getProductOnSalePrice()==0? existingProduct.getProductOnSalePrice() : createProductDto.getProductOnSalePrice());
         mapDtoToProduct(createProductDto, existingProduct);
 
         return productRepository.save(existingProduct);

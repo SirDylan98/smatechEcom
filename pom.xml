@@ -27,6 +27,8 @@
         <module>cart-service</module>
         <module>common-library</module>
         <module>notification-service</module>
+        <module>eureka-server</module>
+        <module>api-gateway</module>
     </modules>
 
     <properties>

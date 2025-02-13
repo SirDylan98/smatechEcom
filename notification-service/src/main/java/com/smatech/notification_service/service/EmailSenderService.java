@@ -113,7 +113,7 @@ public class EmailSenderService {
         emailContent.append("</table>");
 
         emailContent.append("<p>You can track your order or complete the checkout by clicking the link below:</p>");
-        emailContent.append("<p><a href='").append(order.getCheckoutUrl()).append("' style='color: blue; font-weight: bold;'>Complete Checkout</a></p>");
+
 
         emailContent.append("<p>If you have any questions, feel free to contact our support team.</p>");
         emailContent.append("<p>Best regards,</p>");

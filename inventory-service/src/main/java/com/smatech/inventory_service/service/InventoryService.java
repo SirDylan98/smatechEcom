@@ -13,6 +13,7 @@ public interface InventoryService {
 
     public Inventory findInventoryByProductCode(String code);
 
+
     public void deleteInventory(String code);
 
     public List<Inventory> findAllInventories();
