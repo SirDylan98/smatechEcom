@@ -18,6 +18,9 @@ import com.smatech.product_service.utils.UtilsService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +35,7 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final InventoryClient inventoryClient;
+    private static final String PRODUCTS = "products";
 
     @Override
     public Product createProduct(CreateProductDto createProductDto) {
@@ -64,6 +68,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+//    @Cacheable(value = PRODUCTS,key = "#productCode")
     public Product findByProductCode(String code) {
         log.info("Finding product with code: {}", code);
         return productRepository.findByProductCode(code)
@@ -76,6 +81,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+//    @CachePut(value = PRODUCTS,key = "#createProductDto.productCode")
     public Product updateProduct(CreateProductDto createProductDto) {
         log.info("Updating product with code: {}", createProductDto.getProductCode());
 
@@ -91,6 +97,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @CacheEvict(value = PRODUCTS,key = "productCode")
     public void deleteProduct(String code) {
         log.info("Deleting product with code: {}", code);
 
@@ -105,6 +112,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+
     public List<Product> findAllProducts() {
         log.info("Fetching all products");
         return productRepository.findAll();
